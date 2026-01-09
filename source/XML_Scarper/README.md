@@ -12,7 +12,7 @@ A comprehensive YouTube RSS feed scraper designed for building recommendation sy
 - **Rate Limiting**: Configurable delays to respect server limits
 - **Docker Support**: Easy deployment with Docker and Docker Compose
 
-## Quick Start with Docker 🐳
+## Quick Start with Docker
 
 ### Prerequisites
 - Docker

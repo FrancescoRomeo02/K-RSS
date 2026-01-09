@@ -1,13 +1,13 @@
 # K-RSS Team Guidelines
 
-## 👥 Team
+## Team
 
 - **Francesco Romeo** (885880)
 - **Matteo Picozzi** (890228)
 
 ---
 
-## 📐 Architettura del Sistema
+## Architettura del Sistema
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -36,7 +36,7 @@
 
 ---
 
-## 🗂️ Struttura del Progetto
+## Struttura del Progetto
 
 ```
 K-RSS/
@@ -57,7 +57,7 @@ K-RSS/
 
 ---
 
-## 🔧 Convenzioni di Codice
+## Convenzioni di Codice
 
 ### 1. Dataclasses per Strutture Dati
 
@@ -133,7 +133,7 @@ def compute_similarity(embedding_a: List[float], embedding_b: List[float]) -> fl
 
 ---
 
-## 📦 Schema Dati JSON
+## Schema Dati JSON
 
 ### Video Scraped (`data/raw/scraped_videos.json`)
 
@@ -185,7 +185,7 @@ def compute_similarity(embedding_a: List[float], embedding_b: List[float]) -> fl
 
 ---
 
-## 🔬 Componenti AI_RM
+## Componenti AI_RM
 
 ### 1. Embedding Module
 
@@ -249,7 +249,7 @@ def update_profile(user_vector: np.array, video_embedding: np.array,
 
 ---
 
-## 🐳 Comandi Docker Principali
+## Comandi Docker Principali
 
 ```bash
 # Build tutto
@@ -275,20 +275,20 @@ docker-compose logs -f webapp
 
 ---
 
-## 📋 Task Assignment
+## Task Assignment
 
-| Modulo               | Owner     | Status        |
-| -------------------- | --------- | ------------- |
-| XML_Scarper          | Francesco | ✅ Completato  |
-| AI_RM/embeddings     | TBD       | 🔲 Da iniziare |
-| AI_RM/entity_linking | TBD       | 🔲 Da iniziare |
-| AI_RM/recommender    | TBD       | 🔲 Da iniziare |
-| webapp/core          | TBD       | 🟡 Placeholder |
-| webapp/xai           | TBD       | 🔲 Da iniziare |
+| Modulo               | Owner     | Status      |
+| -------------------- | --------- | ----------- |
+| XML_Scarper          | Francesco | Completed   |
+| AI_RM/embeddings     | TBD       | Not Started |
+| AI_RM/entity_linking | TBD       | Not Started |
+| AI_RM/recommender    | TBD       | Not Started |
+| webapp/core          | TBD       | Placeholder |
+| webapp/xai           | TBD       | Not Started |
 
 ---
 
-## 🔀 Git Workflow
+## Git Workflow
 
 1. **Branch naming**: `feature/{module}-{description}`, es: `feature/ai_rm-embeddings`
 2. **Commit messages**: prefissi `feat:`, `fix:`, `docs:`, `refactor:`
@@ -296,7 +296,7 @@ docker-compose logs -f webapp
 
 ---
 
-## 📚 Riferimenti Teorici
+## Riferimenti Teorici
 
 1. **Wu et al. (2023)** - *Recommender Systems in the Era of LLMs*
    - Embeddings post-BERT per recommendation

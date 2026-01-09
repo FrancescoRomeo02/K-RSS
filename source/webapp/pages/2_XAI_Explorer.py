@@ -6,11 +6,11 @@ Explainable AI interface for understanding recommendation decisions.
 
 import streamlit as st
 
-st.set_page_config(page_title="XAI Explorer - K-RSS", page_icon="🔬", layout="wide")
+st.set_page_config(page_title="XAI Explorer - K-RSS", page_icon="XAI", layout="wide")
 
 
 def main():
-    st.title("🔬 XAI Explorer")
+    st.title("XAI Explorer")
     st.markdown("*Understand how recommendations are generated*")
     
     st.info("""

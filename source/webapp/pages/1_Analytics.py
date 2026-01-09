@@ -8,7 +8,7 @@ import streamlit as st
 from pathlib import Path
 import json
 
-st.set_page_config(page_title="Analytics - K-RSS", page_icon="📊", layout="wide")
+st.set_page_config(page_title="Analytics - K-RSS", page_icon="AN", layout="wide")
 
 # Load data
 DATA_PATH = Path("/app/data") if Path("/app/data").exists() else Path("../../../data")
@@ -67,7 +67,7 @@ def main():
     st.divider()
     
     # Channel statistics
-    st.subheader("📺 Videos per Channel")
+    st.subheader("Videos per Channel")
     channel_counts = {}
     for v in videos:
         ch = v.get("channel_name", "Unknown")

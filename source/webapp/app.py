@@ -13,7 +13,7 @@ import json
 # Page configuration
 st.set_page_config(
     page_title="K-RSS - YouTube Recommendations",
-    page_icon="📺",
+    page_icon="YT",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -36,7 +36,7 @@ def main():
     
     # Sidebar
     with st.sidebar:
-        st.title("🎬 K-RSS")
+        st.title("K-RSS")
         st.markdown("*Knowledge-aware YouTube RSS Recommendations*")
         st.divider()
         
@@ -81,10 +81,10 @@ def main():
         with col2:
             st.metric("Channels", metadata.get("total_channels", 0))
         with col3:
-            enriched = "✅" if metadata.get("enriched_via_api") else "❌"
+            enriched = "Yes" if metadata.get("enriched_via_api") else "No"
             st.metric("API Enriched", enriched)
     else:
-        st.warning("⚠️ No videos loaded. Run the scraper first:")
+        st.warning("No videos loaded. Run the scraper first:")
         st.code("docker-compose run --rm scrape-csv", language="bash")
         return
     
@@ -177,11 +177,11 @@ def render_video_card(video: dict, key_prefix: str = "default"):
         # Action buttons (placeholders)
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.button("👍", key=f"{key_prefix}_like_{video['video_id']}", help="Like")
+            st.button("+", key=f"{key_prefix}_like_{video['video_id']}", help="Like")
         with col2:
-            st.button("👎", key=f"{key_prefix}_dislike_{video['video_id']}", help="Dislike")
+            st.button("-", key=f"{key_prefix}_dislike_{video['video_id']}", help="Dislike")
         with col3:
-            st.link_button("▶️", video.get("video_url", "#"), help="Watch")
+            st.link_button("Play", video.get("video_url", "#"), help="Watch")
         
         st.divider()
 

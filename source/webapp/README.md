@@ -8,8 +8,8 @@ Streamlit-based interface for the Knowledge-aware YouTube RSS Recommendation Sys
 webapp/
 ├── app.py                    # Main application entry point
 ├── pages/
-│   ├── 1_📊_Analytics.py    # Dashboard and statistics
-│   └── 2_🔬_XAI_Explorer.py # Explainability interface
+│   ├── 1_Analytics.py        # Dashboard and statistics
+│   └── 2_XAI_Explorer.py     # Explainability interface
 └── README.md
 ```
 

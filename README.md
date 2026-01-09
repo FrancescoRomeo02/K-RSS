@@ -5,7 +5,7 @@
 
 A recommendation system for YouTube RSS feeds that addresses the **cold start problem** and **dynamic personalization** through a **human-in-the-loop** approach.
 
-## 🎯 Project Overview
+## Project Overview
 
 Unlike systems based on traditional collaborative filters, K-RSS uses a **knowledge-aware architecture**:
 
@@ -15,7 +15,7 @@ Unlike systems based on traditional collaborative filters, K-RSS uses a **knowle
 
 3. **Explainability**: Interactive Streamlit interface for manipulating critical parameters (exploration vs. exploitation), making the recommendation process transparent (XAI)
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 K-RSS/
@@ -45,7 +45,7 @@ K-RSS/
 └── references/                 # Research papers
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -82,7 +82,7 @@ docker-compose up jupyter
 # Open http://localhost:8888
 ```
 
-## 🐳 Docker Services
+## Docker Services
 
 | Service             | Description                 | Port |
 | ------------------- | --------------------------- | ---- |
@@ -115,7 +115,7 @@ docker-compose down
 docker-compose down -v
 ```
 
-## 📊 Data Pipeline
+## Data Pipeline
 
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
@@ -130,7 +130,7 @@ docker-compose down -v
                    └─────────────┘    └─────────────┘    └─────────────┘
 ```
 
-## 🔧 Local Development (without Docker)
+## Local Development (without Docker)
 
 ```bash
 # Create virtual environment
@@ -146,17 +146,17 @@ cd source/XML_Scarper
 python scraper.py --csv ../../data/channels/channels.csv --output ../../data/raw/videos.json
 ```
 
-## 📚 References
+## References
 
 - Wu, L., et al. (2023). *Recommender Systems in the Era of Large Language Models (LLMs): A Survey*
 - Wang, X., et al. (2023). *Large Language Models for Interactive Recommendation*
 - Wang, H., et al. (2018). *DKN: Deep Knowledge-Aware Network for News Recommendation*
 
-## 👥 Team
+## Team
 
 - Francesco Romeo (885880)
 - Matteo Picozzi (890228)
 
-## 📄 License
+## License
 
 This project is for academic purposes.
