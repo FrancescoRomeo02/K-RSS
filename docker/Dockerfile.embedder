@@ -1,0 +1,32 @@
+FROM python:3.11-slim
+
+LABEL maintainer="K-RSS Team"
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    TRANSFORMERS_CACHE=/data/models/transformers \
+    HF_HOME=/data/models/huggingface
+
+# Install minimal system deps required by some wheels
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    curl \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies for the AI module
+COPY requirements/ai_rm.txt /tmp/requirements-ai_rm.txt
+RUN python -m pip install --upgrade pip && \
+    pip install --no-cache-dir -r /tmp/requirements-ai_rm.txt
+
+# Copy project files
+COPY . /app
+
+# Expose a data volume for mounting the host data folder
+VOLUME ["/data"]
+
+# Default command: run embedding pipeline reading from mounted /data
+CMD ["python", "-m", "source.AI_RM.embed_pipeline", "--input", "/data/raw/scraped_videos.json"]

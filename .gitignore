@@ -26,8 +26,8 @@ Thumbs.db
 .ipynb_checkpoints/
 
 # Models (can be large)
-models/**
-!models/.gitkeep
+data/models/**
+data/!models/.gitkeep
 
 # Raw data (can be regenerated)
 data/raw/

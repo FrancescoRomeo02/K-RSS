@@ -126,6 +126,23 @@ services:
   # ============================================
   # Full Pipeline Runner
   # ============================================
+  embedder:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.embedder
+    container_name: krss-embedder
+    volumes:
+      - ./data:/data:rw
+      - ./source:/app/source:ro
+      - ./models:/app/models:rw
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TRANSFORMERS_CACHE=/data/models/transformers
+      - HF_HOME=/data/models/huggingface
+    working_dir: /app
+    command: ["python", "-m", "source.AI_RM.embed_pipeline", "--input", "/data/raw/scraped_videos.json"]
+    restart: "on-failure"
+
   pipeline:
     build:
       context: .

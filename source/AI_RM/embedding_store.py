@@ -136,9 +136,15 @@ class EmbeddingStore:
             metadatas.append(metadata)
         
         if ids:
+            # Convert embeddings to list of lists if it's a list of arrays
+            if isinstance(embeddings, list):
+                embeddings_list = [emb.tolist() if hasattr(emb, 'tolist') else emb for emb in embeddings]
+            else:
+                embeddings_list = embeddings.tolist()
+            
             self.collection.add(
                 ids=ids,
-                embeddings=embeddings.tolist(),
+                embeddings=embeddings_list,
                 documents=documents,
                 metadatas=metadatas
             )
@@ -198,11 +204,14 @@ class EmbeddingStore:
         if not result['ids']:
             return None
             
+        embedding = None
+        if result.get('embeddings') is not None and len(result['embeddings']) > 0 and result['embeddings'][0] is not None:
+            embedding = np.array(result['embeddings'][0])
         return {
             'video_id': result['ids'][0],
             'text': result['documents'][0] if result['documents'] else "",
             'metadata': result['metadatas'][0] if result['metadatas'] else {},
-            'embedding': np.array(result['embeddings'][0]) if result['embeddings'] else None
+            'embedding': embedding
         }
     
     def delete_videos(self, video_ids: List[str]) -> int:

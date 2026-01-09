@@ -132,6 +132,41 @@ docker-compose down
 docker-compose down -v
 ```
 
+## Embedding pipeline (Docker)
+
+Run the embedding pipeline in Docker; the service `embedder` mounts the repository `data/` folder and reads
+`/data/raw/scraped_videos.json` by default.
+
+Build and run the embedder image:
+
+```bash
+# Build image
+docker build -t krss-embedder -f docker/Dockerfile.embedder .
+
+# Run once (mount local data/ to /data in container)
+docker run --rm -v "$(pwd)/data":/data krss-embedder
+
+# Or with docker-compose
+docker compose up --build embedder
+```
+
+CLI options (local runs):
+
+```bash
+# Dry run (no write)
+python -m source.AI_RM.embed_pipeline --input data/raw/scraped_videos.json --dry-run
+
+# Default behavior: skips videos already present (resume)
+python -m source.AI_RM.embed_pipeline --input data/raw/scraped_videos.json
+
+# Force update (recompute embeddings for videos already in store)
+python -m source.AI_RM.embed_pipeline --input data/raw/scraped_videos.json --update
+
+# Disable resume (process all, will attempt to add existing ids and may fail unless --update used)
+python -m source.AI_RM.embed_pipeline --input data/raw/scraped_videos.json --no-resume
+```
+
+
 ## Data Pipeline
 
 ```

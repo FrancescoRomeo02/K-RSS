@@ -7,6 +7,7 @@ Configuration settings for the AI Recommendation Module.
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
+import os
 
 
 @dataclass
@@ -21,7 +22,7 @@ class EmbeddingConfig:
     
     # Caching
     cache_embeddings: bool = True
-    cache_path: Path = Path("data/embeddings/cache")
+    cache_path: Path = field(default_factory=lambda: Path(os.path.dirname(__file__)).parent.parent / "data" / "embeddings" / "cache")
     
     # Processing
     batch_size: int = 32
@@ -39,7 +40,7 @@ class VectorStoreConfig:
         — Recommender AI Agent: Integrating LLMs for Interactive Recommendations
     """
     # ChromaDB settings
-    persist_path: Path = Path("data/embeddings/chroma_db")
+    persist_path: Path = field(default_factory=lambda: Path(os.path.dirname(__file__)).parent.parent / "data" / "embeddings" / "chroma_db")
     collection_name: str = "krss_videos"
     
     # Similarity metric: "cosine", "l2", "ip" (inner product)
@@ -96,7 +97,7 @@ class RecommenderConfig:
 class UserProfileConfig:
     """Configuration for user profile management."""
     # Storage
-    profiles_path: Path = Path("data/users")
+    profiles_path: Path = field(default_factory=lambda: Path(os.path.dirname(__file__)).parent.parent / "data" / "users")
     
     # Vector shifting
     learning_rate: float = 0.1
@@ -120,8 +121,8 @@ class AIRMConfig:
     user_profile: UserProfileConfig = field(default_factory=UserProfileConfig)
     
     # Paths
-    data_path: Path = Path("data")
-    models_path: Path = Path("models")
+    data_path: Path = field(default_factory=lambda: Path(os.path.dirname(__file__)).parent.parent / "data")
+    models_path: Path = field(default_factory=lambda: Path(os.path.dirname(__file__)).parent.parent / "models")
     
     # Environment
     device: str = "cpu"  # "cpu" or "cuda"
