@@ -14,16 +14,14 @@ Features:
 
 import csv
 import json
+import logging
 import re
 import time
-import logging
-from datetime import datetime
+import xml.etree.ElementTree as ET
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
-from dataclasses import dataclass, asdict, field
-import xml.etree.ElementTree as ET
-from urllib.parse import urlparse, parse_qs
-import hashlib
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -45,6 +43,11 @@ NAMESPACES = {
     'yt': 'http://www.youtube.com/xml/schemas/2015',
     'media': 'http://search.yahoo.com/mrss/'
 }
+
+# YouTube channel ID constants
+CHANNEL_ID_PREFIX = 'UC'
+CHANNEL_ID_LENGTH = 24
+CHANNEL_ID_PATTERN = r'UC[a-zA-Z0-9_-]{22}'
 
 
 @dataclass
@@ -92,7 +95,7 @@ class VideoMetadata:
         self.title_length = len(self.title) if self.title else 0
         self.description_length = len(self.description) if self.description else 0
         self.has_description = bool(self.description and self.description.strip())
-        self.scraped_at = datetime.utcnow().isoformat()
+        self.scraped_at = datetime.now(timezone.utc).isoformat()
 
 
 @dataclass
@@ -109,18 +112,34 @@ class ChannelMetadata:
     scraped_at: str = ""
     
     def __post_init__(self):
-        self.scraped_at = datetime.utcnow().isoformat()
+        self.scraped_at = datetime.now(timezone.utc).isoformat()
 
 
 @dataclass
 class ScrapingResult:
-    """
-    Complete scraping result containing channel and video data.
-    """
+    """Complete scraping result containing channel and video data."""
+
     channel: ChannelMetadata
-    videos: list
+    videos: list[VideoMetadata]
     success: bool
     error_message: Optional[str] = None
+
+    @classmethod
+    def failure(cls, channel_input: str, error: str, channel_id: str = "") -> "ScrapingResult":
+        """Create a failed scraping result."""
+        return cls(
+            channel=ChannelMetadata(
+                channel_id=channel_id,
+                channel_name=channel_input if not channel_id else "Unknown",
+                channel_url="",
+                feed_url="",
+                last_updated="",
+                video_count=0,
+            ),
+            videos=[],
+            success=False,
+            error_message=error,
+        )
 
 
 class YouTubeRSSScraper:
@@ -192,12 +211,12 @@ class YouTubeRSSScraper:
         channel_input = channel_input.strip()
         
         # Already a channel ID
-        if channel_input.startswith('UC') and len(channel_input) == 24:
+        if channel_input.startswith(CHANNEL_ID_PREFIX) and len(channel_input) == CHANNEL_ID_LENGTH:
             return channel_input
         
         # Full channel URL
         if 'youtube.com/channel/' in channel_input:
-            match = re.search(r'youtube\.com/channel/(UC[a-zA-Z0-9_-]{22})', channel_input)
+            match = re.search(rf'youtube\.com/channel/({CHANNEL_ID_PATTERN})', channel_input)
             if match:
                 return match.group(1)
         
@@ -246,14 +265,14 @@ class YouTubeRSSScraper:
             # Look for channel ID in the page source
             # YouTube embeds it in various places - try multiple patterns
             patterns = [
-                r'"channelId"\s*:\s*"(UC[a-zA-Z0-9_-]{22})"',
-                r'"externalId"\s*:\s*"(UC[a-zA-Z0-9_-]{22})"',
-                r'"browseId"\s*:\s*"(UC[a-zA-Z0-9_-]{22})"',
-                r'channel_id=(UC[a-zA-Z0-9_-]{22})',
-                r'<meta itemprop="channelId" content="(UC[a-zA-Z0-9_-]{22})"',
-                r'<link rel="canonical" href="https://www\.youtube\.com/channel/(UC[a-zA-Z0-9_-]{22})"',
-                r'"ucid"\s*:\s*"(UC[a-zA-Z0-9_-]{22})"',
-                r'/channel/(UC[a-zA-Z0-9_-]{22})',
+                rf'"channelId"\s*:\s*"({CHANNEL_ID_PATTERN})"',
+                rf'"externalId"\s*:\s*"({CHANNEL_ID_PATTERN})"',
+                rf'"browseId"\s*:\s*"({CHANNEL_ID_PATTERN})"',
+                rf'channel_id=({CHANNEL_ID_PATTERN})',
+                rf'<meta itemprop="channelId" content="({CHANNEL_ID_PATTERN})"',
+                rf'<link rel="canonical" href="https://www\.youtube\.com/channel/({CHANNEL_ID_PATTERN})"',
+                rf'"ucid"\s*:\s*"({CHANNEL_ID_PATTERN})"',
+                rf'/channel/({CHANNEL_ID_PATTERN})',
             ]
             
             for pattern in patterns:
@@ -316,12 +335,12 @@ class YouTubeRSSScraper:
             
             videos = []
             for entry in entries:
-                video = self._parse_entry(entry, channel_id, channel_name)
+                video =  self._parse_entry(entry, channel_id, channel_name) if channel_name else None
                 if video:
                     videos.append(video)
             
             # Get last updated from feed
-            last_updated = self._get_text(root, 'atom:updated') or datetime.utcnow().isoformat()
+            last_updated = self._get_text(root, 'atom:updated') or datetime.now(timezone.utc).isoformat()
             
             channel_metadata = ChannelMetadata(
                 channel_id=channel_id,
@@ -410,14 +429,7 @@ class YouTubeRSSScraper:
                             view_count = int(views_str)
                         except ValueError:
                             pass
-                
-                # Extract star rating (like ratio)
-                star_rating = media_community.find('media:starRating', NAMESPACES)
-                like_count = None
-                if star_rating is not None:
-                    # YouTube provides average rating, not direct like count
-                    pass
-            
+
             video_url = f"https://www.youtube.com/watch?v={video_id}"
             
             return VideoMetadata(
@@ -433,8 +445,8 @@ class YouTubeRSSScraper:
                 view_count=view_count
             )
             
-        except Exception as e:
-            logger.warning(f"Error parsing entry: {e}")
+        except (AttributeError, KeyError, TypeError) as e:
+            logger.exception(f"Error parsing entry: {e}")
             return None
     
     def _get_text(self, element: ET.Element, xpath: str) -> Optional[str]:
@@ -460,46 +472,21 @@ class YouTubeRSSScraper:
             ScrapingResult with channel and video data
         """
         logger.info(f"Processing channel: {channel_input}")
-        
+
         # Resolve to channel ID
         channel_id = self._resolve_channel_id(channel_input)
-        
         if not channel_id:
-            logger.error(f"Could not resolve channel ID for: {channel_input}")
-            return ScrapingResult(
-                channel=ChannelMetadata(
-                    channel_id="",
-                    channel_name=channel_input,
-                    channel_url="",
-                    feed_url="",
-                    last_updated="",
-                    video_count=0
-                ),
-                videos=[],
-                success=False,
-                error_message=f"Could not resolve channel ID for: {channel_input}"
-            )
-        
+            error_msg = f"Could not resolve channel ID for: {channel_input}"
+            logger.error(error_msg)
+            return ScrapingResult.failure(channel_input, error_msg)
+
         # Build and fetch feed
         feed_url = self._build_feed_url(channel_id)
         logger.info(f"Fetching feed: {feed_url}")
-        
+
         feed_content = self._fetch_feed(feed_url)
-        
         if not feed_content:
-            return ScrapingResult(
-                channel=ChannelMetadata(
-                    channel_id=channel_id,
-                    channel_name="Unknown",
-                    channel_url="",
-                    feed_url=feed_url,
-                    last_updated="",
-                    video_count=0
-                ),
-                videos=[],
-                success=False,
-                error_message="Failed to fetch RSS feed"
-            )
+            return ScrapingResult.failure(channel_input, "Failed to fetch RSS feed", channel_id)
         
         # Parse feed
         result = self._parse_feed(feed_content, channel_id)
@@ -525,9 +512,9 @@ class YouTubeRSSScraper:
         Returns:
             Dictionary containing all scraped data
         """
-        csv_path = Path(csv_path)
+        csv_file = Path(csv_path)
         
-        if not csv_path.exists():
+        if not csv_file.exists():
             raise FileNotFoundError(f"CSV file not found: {csv_path}")
         
         channels_data = []
@@ -549,13 +536,15 @@ class YouTubeRSSScraper:
                 delimiter = ','
             
             reader = csv.DictReader(f, delimiter=delimiter)
-            
+            fieldnames = reader.fieldnames
             # Check if column exists
-            if channel_column not in reader.fieldnames:
+            if fieldnames is None:
+                raise ValueError("CSV file has no headers")
+            if channel_column not in fieldnames:
                 # Try common alternatives
                 alternatives = ['channel', 'channel_id', 'channelId', 'name', 'id', 'Channel', 'Channel ID']
                 for alt in alternatives:
-                    if alt in reader.fieldnames:
+                    if alt in fieldnames:
                         channel_column = alt
                         break
                 else:
@@ -599,11 +588,11 @@ class YouTubeRSSScraper:
         # Build output structure optimized for recommendation system
         output = {
             "metadata": {
-                "scraped_at": datetime.utcnow().isoformat(),
+                "scraped_at": datetime.now(timezone.utc).isoformat(),
                 "total_channels": len(channels_data),
                 "total_videos": len(all_videos),
                 "failed_channels": len(failed_channels),
-                "source_file": str(csv_path.name)
+                "source_file": str(csv_file.name)
             },
             "channels": channels_data,
             "videos": all_videos,
@@ -617,24 +606,22 @@ class YouTubeRSSScraper:
         
         # Save to file if path provided
         if output_path:
-            output_path = Path(output_path)
-            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_file = Path(output_path)
+            output_file.parent.mkdir(parents=True, exist_ok=True)
             
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_file, 'w', encoding='utf-8') as f:
                 json.dump(output, f, indent=2, ensure_ascii=False)
+                f.write('\n')  # Add trailing newline for POSIX compliance
             
-            logger.info(f"Output saved to: {output_path}")
+            logger.info(f"Output saved to: {output_file}")
         
         return output
     
-    def _group_videos_by_channel(self, videos: list) -> dict:
+    def _group_videos_by_channel(self, videos: list[dict]) -> dict[str, list[int]]:
         """Group video indices by channel ID."""
-        grouped = {}
+        grouped: dict[str, list[int]] = {}
         for idx, video in enumerate(videos):
-            channel_id = video['channel_id']
-            if channel_id not in grouped:
-                grouped[channel_id] = []
-            grouped[channel_id].append(idx)
+            grouped.setdefault(video['channel_id'], []).append(idx)
         return grouped
 
 
@@ -653,10 +640,10 @@ def create_sample_csv(output_path: str):
         {"channel": "@lexfridman", "category": "podcast"},
     ]
     
-    output_path = Path(output_path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_file = Path(output_path)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
     
-    with open(output_path, 'w', newline='', encoding='utf-8') as f:
+    with open(output_file, 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=['channel', 'category'])
         writer.writeheader()
         writer.writerows(sample_channels)
@@ -752,7 +739,7 @@ Examples:
         if result.success:
             output = {
                 "metadata": {
-                    "scraped_at": datetime.utcnow().isoformat(),
+                    "scraped_at": datetime.now(timezone.utc).isoformat(),
                     "total_channels": 1,
                     "total_videos": len(result.videos)
                 },
@@ -765,6 +752,7 @@ Examples:
             
             with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump(output, f, indent=2, ensure_ascii=False)
+                f.write('\n')  # Add trailing newline for POSIX compliance
             
             print(f"\n{'='*50}")
             print("Scraping Complete!")
