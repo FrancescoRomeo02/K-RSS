@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json
 # K-RSS - Knowledge-aware YouTube RSS Recommendation System
 # Multi-service Docker Compose configuration
 
@@ -19,7 +20,7 @@ services:
     working_dir: /app/scraper
     command: ["python", "scraper.py", "--help"]
 
-  # Convenience service for CSV scraping
+  # Convenience service for CSV scraping (RSS only)
   scrape-csv:
     build:
       context: .
@@ -35,6 +36,27 @@ services:
       "--csv", "/app/data/channels/channels.csv",
       "--output", "/app/data/raw/scraped_videos.json",
       "--delay", "1.5"
+    ]
+
+  # CSV scraping + YouTube API enrichment
+  scrape-enrich:
+    build:
+      context: .
+      dockerfile: docker/scraper.Dockerfile
+    container_name: krss-scrape-enrich
+    volumes:
+      - ./source/XML_Scarper:/app/scraper
+      - ./data/raw:/app/data/raw
+      - ./data/channels:/app/data/channels
+    environment:
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+    working_dir: /app/scraper
+    command: [
+      "python", "scraper.py",
+      "--csv", "/app/data/channels/channels.csv",
+      "--output", "/app/data/raw/scraped_videos.json",
+      "--delay", "1.5",
+      "--enrich"
     ]
 
   # ============================================
