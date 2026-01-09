@@ -9,6 +9,9 @@ torch>=2.0.0
 transformers>=4.35.0
 sentence-transformers>=2.2.0
 
+# Vector Database (as per "Recommender AI Agent" paper)
+chromadb>=0.4.0
+
 # Knowledge Graph / Entity Linking
 SPARQLWrapper>=2.0.0
 rdflib>=7.0.0
