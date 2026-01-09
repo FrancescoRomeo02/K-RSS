@@ -14,24 +14,24 @@ def main():
     st.markdown("*Understand how recommendations are generated*")
     
     st.info("""
-    🚧 **Coming Soon** - This page will provide explainability tools for the recommendation system.
+    **Coming Soon** - This page will provide explainability tools for the recommendation system.
     """)
     
     st.divider()
     
     # Planned features preview
-    st.subheader("📋 Planned Features")
+    st.subheader("Planned Features")
     
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("""
-        ### 🎯 Recommendation Explanation
+        ### Recommendation Explanation
         - Why was this video recommended?
         - Which entities/topics drove the recommendation?
         - Similarity breakdown visualization
         
-        ### 📊 Embedding Visualization
+        ### Embedding Visualization
         - 2D/3D projection of video embeddings
         - User profile position in latent space
         - Cluster visualization
@@ -39,12 +39,12 @@ def main():
     
     with col2:
         st.markdown("""
-        ### 🔗 Knowledge Graph View
+        ### Knowledge Graph View
         - Entity relationships from DBpedia/Wikidata
         - Topic connections between videos
         - Interactive graph exploration
         
-        ### ⚖️ Parameter Impact
+        ### Parameter Impact
         - How exploration/exploitation affects results
         - A/B comparison of recommendations
         - Parameter sensitivity analysis
@@ -53,7 +53,7 @@ def main():
     st.divider()
     
     # Interactive parameter demo
-    st.subheader("🎛️ Parameter Playground (Demo)")
+    st.subheader("Parameter Playground (Demo)")
     
     col1, col2 = st.columns(2)
     

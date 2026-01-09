@@ -41,7 +41,7 @@ def main():
         st.divider()
         
         # XAI Parameters Section (placeholder)
-        st.subheader("⚙️ XAI Parameters")
+        st.subheader("XAI Parameters")
         
         exploration = st.slider(
             "Exploration vs Exploitation",
@@ -62,11 +62,11 @@ def main():
         )
         
         st.divider()
-        st.caption("🔬 Academic Project")
+        st.caption("Academic Project")
         st.caption("Francesco Romeo & Matteo Picozzi")
     
     # Main content
-    st.title("📺 Video Recommendations")
+    st.title("Video Recommendations")
     
     # Load data
     data = load_videos()
@@ -77,25 +77,24 @@ def main():
     if videos:
         col1, col2, col3 = st.columns(3)
         with col1:
-            st.metric("📹 Total Videos", len(videos))
+            st.metric("Total Videos", len(videos))
         with col2:
-            st.metric("📺 Channels", metadata.get("total_channels", 0))
+            st.metric("Channels", metadata.get("total_channels", 0))
         with col3:
             enriched = "✅" if metadata.get("enriched_via_api") else "❌"
-            st.metric("🔗 API Enriched", enriched)
+            st.metric("API Enriched", enriched)
     else:
         st.warning("⚠️ No videos loaded. Run the scraper first:")
         st.code("docker-compose run --rm scrape-csv", language="bash")
         return
     
-    st.divider()
     
     # Tabs for different views
-    tab1, tab2, tab3 = st.tabs(["🎯 For You", "📊 Explore", "👤 Profile"])
+    tab1, tab2, tab3 = st.tabs(["For You", "Explore", "Profile"])
     
     with tab1:
         st.subheader("Recommended Videos")
-        st.info("🚧 Recommendation engine not yet integrated. Showing recent videos.")
+        st.info("Recommendation engine not yet integrated. Showing recent videos.")
         
         # Display videos in grid
         cols = st.columns(3)
@@ -126,18 +125,19 @@ def main():
     
     with tab3:
         st.subheader("User Profile")
-        st.info("🚧 User profile management coming soon.")
+        st.info("User profile management coming soon.")
         
         st.markdown("""
         ### Planned Features:
-        - 👍 **Positive/Negative Voting** - Train your preferences
-        - 📈 **Profile Vector Visualization** - See your taste evolve
-        - 🔄 **Profile Reset** - Start fresh
-        - 📊 **Feedback History** - Review your interactions
+        - **Positive/Negative Voting** - Train your preferences
+        - **Profile Vector Visualization** - See your taste evolve
+        - **Profile Reset** - Start fresh
+        - **Feedback History** - Review your interactions
         """)
 
 
 def render_video_card(video: dict, key_prefix: str = "default"):
+    print(video)
     """Render a single video card."""
     with st.container():
         # Thumbnail
@@ -149,20 +149,30 @@ def render_video_card(video: dict, key_prefix: str = "default"):
         if len(video.get("title", "")) > 60:
             title += "..."
         st.markdown(f"**{title}**")
+
+        # Description (trunched)
+        desc = video.get("description", "Unknown")[:100]
+        if len(video.get("description", "")) > 100:
+            desc += "..."
+        st.caption(desc)
         
         # Channel
-        st.caption(f"📺 {video.get('channel_name', 'Unknown')}")
+        st.caption(f"{video.get('channel_name', 'Unknown')}")
         
         # Metrics row
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         with col1:
             views = video.get("view_count")
             if views:
-                st.caption(f"👁️ {format_number(views)}")
-        with col2:
+                st.caption(f"{format_number(views)} views")
+        with col3:
             duration = video.get("duration_seconds")
             if duration:
-                st.caption(f"⏱️ {format_duration(duration)}")
+                st.caption(f"{format_duration(duration)}")
+        with col2:
+            like = video.get("like_count")
+            if like:
+                st.caption(f'{format_number(like)} like')
         
         # Action buttons (placeholders)
         col1, col2, col3 = st.columns(3)

@@ -23,7 +23,7 @@ def load_videos() -> dict:
 
 
 def main():
-    st.title("📊 Analytics Dashboard")
+    st.title("Analytics Dashboard")
     st.markdown("*Insights into the video collection and recommendation performance*")
     
     data = load_videos()
@@ -35,7 +35,7 @@ def main():
         return
     
     # Overview metrics
-    st.subheader("📈 Collection Overview")
+    st.subheader("Collection Overview")
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -52,7 +52,7 @@ def main():
     st.divider()
     
     # Category distribution
-    st.subheader("🏷️ Category Distribution")
+    st.subheader("Category Distribution")
     categories = {}
     for v in videos:
         cat = v.get("category_name", "Unknown")
@@ -82,8 +82,8 @@ def main():
     st.divider()
     
     # Placeholder for recommendation metrics
-    st.subheader("🎯 Recommendation Metrics")
-    st.info("🚧 Recommendation analytics will be available after AI_RM integration.")
+    st.subheader("Recommendation Metrics")
+    st.info("Recommendation analytics will be available after AI_RM integration.")
     
     col1, col2, col3 = st.columns(3)
     with col1:
