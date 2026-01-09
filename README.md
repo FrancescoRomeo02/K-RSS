@@ -34,14 +34,19 @@ K-RSS/
 │   └── all.txt
 ├── source/                     # Source code
 │   ├── XML_Scarper/           # YouTube RSS scraper
-│   └── AI_RM/                 # AI Recommendation Module
+│   ├── AI_RM/                 # AI Recommendation Module
+│   └── webapp/                # Streamlit web interface
+│       ├── app.py             # Main application
+│       └── pages/             # Multi-page Streamlit app
+│           ├── 1_Analytics.py
+│           └── 2_XAI_Explorer.py
 ├── data/                       # Data directory (mounted as volume)
 │   ├── channels/              # Channel lists (CSV input)
-│   ├── raw/                   # Raw scraped data
+│   ├── raw/                   # Raw scraped data (scraped_videos.json)
 │   ├── processed/             # Processed data for ML
 │   ├── embeddings/            # Vector embeddings
 │   └── users/                 # User profiles
-├── models/                     # Trained models (mounted as volume)
+├── models/                     # Trained models and HuggingFace cache
 └── references/                 # Research papers
 ```
 
@@ -84,26 +89,38 @@ docker-compose up jupyter
 
 ## Docker Services
 
-| Service             | Description                 | Port |
-| ------------------- | --------------------------- | ---- |
-| `scraper`           | YouTube RSS Scraper         | -    |
-| `scrape-csv`        | Batch scraping from CSV     | -    |
-| `ai-recommendation` | ML/DL recommendation engine | -    |
-| `webapp`            | Streamlit web interface     | 8501 |
-| `jupyter`           | Jupyter Lab for development | 8888 |
-| `pipeline`          | Full pipeline runner        | -    |
+| Service             | Description                        | Port |
+| ------------------- | ---------------------------------- | ---- |
+| `scraper`           | YouTube RSS Scraper (help)         | -    |
+| `scrape-csv`        | Batch scraping from CSV (RSS only) | -    |
+| `scrape-enrich`     | Scraping + YouTube API enrichment  | -    |
+| `ai-recommendation` | ML/DL recommendation engine        | -    |
+| `webapp`            | Streamlit web interface            | 8501 |
+| `jupyter`           | Jupyter Lab for development        | 8888 |
+| `pipeline`          | Full pipeline runner               | -    |
 
 ### Common Commands
 
 ```bash
-# Build specific service
-docker-compose build scraper
+# Build all services
+docker-compose build
+
+# Run RSS scraping only
+docker-compose run --rm scrape-csv
+
+# Run scraping with YouTube API enrichment (requires YOUTUBE_API_KEY)
+YOUTUBE_API_KEY=your_key docker-compose run --rm scrape-enrich
+
+# Start web app
+docker-compose up webapp
+# Open http://localhost:8501
+
+# Start Jupyter Lab
+docker-compose up jupyter
+# Open http://localhost:8888
 
 # Run scraper with custom options
-docker-compose run --rm scraper python scraper.py --channel CHANNEL_ID --output /app/data/raw/output.json
-
-# Start web app in background
-docker-compose up -d webapp
+docker-compose run --rm scraper python scraper.py --channel @3blue1brown --output /app/data/raw/output.json
 
 # View logs
 docker-compose logs -f webapp
@@ -118,17 +135,49 @@ docker-compose down -v
 ## Data Pipeline
 
 ```
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│  YouTube    │───▶│   Scraper   │───▶│  Embedding  │───▶│  User       │
-│  RSS Feeds  │    │  (XML)      │    │  (LLM)      │    │  Feedback   │
-└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
-                         │                   │                   │
-                         ▼                   ▼                   ▼
-                   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-                   │  data/raw/  │    │  data/      │    │  data/      │
-                   │  videos.json│    │  embeddings/│    │  users/     │
-                   └─────────────┘    └─────────────┘    └─────────────┘
+                                    K-RSS Pipeline
+                                    
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  channels.csv   │────▶│   XML_Scarper   │────▶│ scraped_videos  │
+│  (input)        │     │   (RSS Feed)    │     │    .json        │
+└─────────────────┘     └────────┬────────┘     └────────┬────────┘
+                                 │                       │
+                        optional │                       │
+                                 ▼                       │
+                        ┌─────────────────┐              │
+                        │  YouTube API    │              │
+                        │  (enrichment)   │              │
+                        └─────────────────┘              │
+                                                         │
+         ┌───────────────────────────────────────────────┘
+         │
+         ▼
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│     AI_RM       │────▶│   Embeddings    │────▶│  Streamlit      │
+│  (processing)   │     │   (vectors)     │     │  Web App        │
+└─────────────────┘     └─────────────────┘     └────────┬────────┘
+                                                         │
+                                                         ▼
+                                                ┌─────────────────┐
+                                                │  User Feedback  │
+                                                │  (profiles)     │
+                                                └─────────────────┘
 ```
+
+### Pipeline Steps
+
+1. **Scraping** (`scrape-csv` or `scrape-enrich`)
+   - Input: `data/channels/channels.csv`
+   - Output: `data/raw/scraped_videos.json`
+
+2. **Embedding Generation** (`ai-recommendation`) - *In Development*
+   - Input: `data/raw/scraped_videos.json`
+   - Output: `data/embeddings/`
+
+3. **Web Interface** (`webapp`)
+   - Displays recommendations
+   - Collects user feedback
+   - XAI parameter exploration
 
 ## Local Development (without Docker)
 
@@ -141,10 +190,25 @@ source venv/bin/activate  # Linux/Mac
 # Install all dependencies
 pip install -r requirements/all.txt
 
-# Run scraper
+# Run scraper (RSS only)
 cd source/XML_Scarper
-python scraper.py --csv ../../data/channels/channels.csv --output ../../data/raw/videos.json
+python scraper.py --csv ../../data/channels/channels.csv --output ../../data/raw/scraped_videos.json
+
+# Run scraper with API enrichment
+YOUTUBE_API_KEY=your_key python scraper.py --csv ../../data/channels/channels.csv --output ../../data/raw/scraped_videos.json --enrich
+
+# Start web app
+cd source/webapp
+streamlit run app.py
 ```
+
+## Environment Variables
+
+| Variable             | Description                              | Required |
+| -------------------- | ---------------------------------------- | -------- |
+| `YOUTUBE_API_KEY`    | YouTube Data API key for enrichment      | Optional |
+| `TRANSFORMERS_CACHE` | HuggingFace transformers cache directory | Optional |
+| `HF_HOME`            | HuggingFace home directory               | Optional |
 
 ## References
 
