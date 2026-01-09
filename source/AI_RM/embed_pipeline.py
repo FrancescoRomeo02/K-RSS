@@ -178,7 +178,16 @@ def main(argv: Optional[List[str]] = None) -> int:
             if videos_to_add:
                 # If update flag is set, delete existing ids first to allow re-insert
                 if args.update:
-                    ids_to_delete = [v.get('video_id') for v in videos_to_add if store.exists(v.get('video_id'))]
+                    ids_to_delete: List[str] = []
+                    for v in videos_to_add:
+                        vid = v.get('video_id')
+                        if not isinstance(vid, str):
+                            continue
+                        try:
+                            if store.exists(vid):
+                                ids_to_delete.append(vid)
+                        except Exception:
+                            logger.exception("Error checking existence for %s; skipping delete", vid)
                     if ids_to_delete:
                         try:
                             store.delete_videos(ids_to_delete)
@@ -189,7 +198,15 @@ def main(argv: Optional[List[str]] = None) -> int:
                 store.add_videos(videos_to_add, embeddings, texts)
                 added_count = len(videos_to_add)
                 total_added += added_count
-                sample_added_ids.extend([v.get('video_id') for v in videos_to_add[:5]])
+                for v in videos_to_add[:5]:
+                    vid = v.get('video_id')
+                    if not isinstance(vid, str):
+                        continue
+                    try:
+                        if store.exists(vid):
+                            sample_added_ids.extend(vid)
+                    except:
+                        logger.exception("Faild to extract existing video: %s", vid)
                 logger.info("Added %d vectors (example id: %s)", added_count, [v.get('video_id') for v in videos_to_add[:1]])
             else:
                 logger.info("No videos to add for this batch")
