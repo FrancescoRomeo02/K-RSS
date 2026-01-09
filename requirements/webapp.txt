@@ -1,0 +1,5 @@
+# Web Application dependencies
+streamlit>=1.29.0
+plotly>=5.18.0
+altair>=5.2.0
+watchdog>=3.0.0

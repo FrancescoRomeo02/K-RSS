@@ -1,0 +1,119 @@
+# K-RSS - Knowledge-aware YouTube RSS Recommendation System
+# Multi-service Docker Compose configuration
+
+services:
+  # ============================================
+  # YouTube RSS Scraper Service
+  # ============================================
+  scraper:
+    build:
+      context: .
+      dockerfile: docker/scraper.Dockerfile
+    container_name: krss-scraper
+    volumes:
+      - ./source/XML_Scarper:/app/scraper
+      - ./data/raw:/app/data/raw
+      - ./data/channels:/app/data/channels
+    environment:
+      - PYTHONUNBUFFERED=1
+    working_dir: /app/scraper
+    command: ["python", "scraper.py", "--help"]
+
+  # Convenience service for CSV scraping
+  scrape-csv:
+    build:
+      context: .
+      dockerfile: docker/scraper.Dockerfile
+    container_name: krss-scrape-csv
+    volumes:
+      - ./source/XML_Scarper:/app/scraper
+      - ./data/raw:/app/data/raw
+      - ./data/channels:/app/data/channels
+    working_dir: /app/scraper
+    command: [
+      "python", "scraper.py",
+      "--csv", "/app/data/channels/channels.csv",
+      "--output", "/app/data/raw/scraped_videos.json",
+      "--delay", "1.5"
+    ]
+
+  # ============================================
+  # AI Recommendation Module Service
+  # ============================================
+  ai-recommendation:
+    build:
+      context: .
+      dockerfile: docker/ai_rm.Dockerfile
+    container_name: krss-ai-rm
+    volumes:
+      - ./source/AI_RM:/app/ai_rm
+      - ./data:/app/data
+      - ./models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TRANSFORMERS_CACHE=/app/models/transformers
+      - HF_HOME=/app/models/huggingface
+    working_dir: /app/ai_rm
+    # GPU support (uncomment if needed)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # ============================================
+  # Streamlit Web Interface
+  # ============================================
+  webapp:
+    build:
+      context: .
+      dockerfile: docker/webapp.Dockerfile
+    container_name: krss-webapp
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./source:/app/source
+      - ./data:/app/data
+      - ./models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+    depends_on:
+      - ai-recommendation
+    command: ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+
+  # ============================================
+  # Jupyter Lab for Development/Analysis
+  # ============================================
+  jupyter:
+    build:
+      context: .
+      dockerfile: docker/jupyter.Dockerfile
+    container_name: krss-jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - JUPYTER_ENABLE_LAB=yes
+    command: ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token=''"]
+
+  # ============================================
+  # Full Pipeline Runner
+  # ============================================
+  pipeline:
+    build:
+      context: .
+      dockerfile: docker/pipeline.Dockerfile
+    container_name: krss-pipeline
+    volumes:
+      - ./source:/app/source
+      - ./data:/app/data
+      - ./models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: ["python", "-m", "pipeline.run"]

@@ -1,0 +1,7 @@
+# K-RSS - All dependencies combined
+# Use this for local development without Docker
+
+-r scraper.txt
+-r ai_rm.txt
+-r webapp.txt
+-r dev.txt
