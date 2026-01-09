@@ -23,9 +23,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+import requests # pyright: ignore[reportMissingModuleSource]
+from requests.adapters import HTTPAdapter # pyright: ignore[reportMissingModuleSource]
+from urllib3.util.retry import Retry # pyright: ignore[reportMissingImports]
 
 # Configure logging
 logging.basicConfig(
@@ -417,16 +417,28 @@ class YouTubeRSSScraper:
                 if thumbnail is not None:
                     thumbnail_url = thumbnail.get('url', '')
             
-            # Extract view count from media:community if available
+            # Extract view count and like count from media:community if available
             view_count = None
+            like_count = None
             media_community = entry.find('.//media:community', NAMESPACES)
             if media_community is not None:
+                # Extract views from media:statistics
                 statistics = media_community.find('media:statistics', NAMESPACES)
                 if statistics is not None:
                     views_str = statistics.get('views', '')
                     if views_str:
                         try:
                             view_count = int(views_str)
+                        except ValueError:
+                            pass
+                
+                # Extract like count from media:starRating (count attribute = number of likes)
+                star_rating = media_community.find('media:starRating', NAMESPACES)
+                if star_rating is not None:
+                    likes_str = star_rating.get('count', '')
+                    if likes_str:
+                        try:
+                            like_count = int(likes_str)
                         except ValueError:
                             pass
 
@@ -442,7 +454,8 @@ class YouTubeRSSScraper:
                 updated_date=updated,
                 thumbnail_url=thumbnail_url,
                 video_url=video_url,
-                view_count=view_count
+                view_count=view_count,
+                like_count=like_count
             )
             
         except (AttributeError, KeyError, TypeError) as e:
