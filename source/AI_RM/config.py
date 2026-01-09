@@ -30,6 +30,31 @@ class EmbeddingConfig:
 
 
 @dataclass
+class VectorStoreConfig:
+    """Configuration for ChromaDB vector store.
+    
+    Reference:
+        "We employ sentence-transformers to encode demonstrations into vectors 
+        and store them using ChromaDB, which facilitates ANN search during runtime."
+        — Recommender AI Agent: Integrating LLMs for Interactive Recommendations
+    """
+    # ChromaDB settings
+    persist_path: Path = Path("data/embeddings/chroma_db")
+    collection_name: str = "krss_videos"
+    
+    # Similarity metric: "cosine", "l2", "ip" (inner product)
+    distance_metric: str = "cosine"
+    
+    # Metadata fields to store with each video
+    metadata_fields: List[str] = field(default_factory=lambda: [
+        "channel_id",
+        "channel_name", 
+        "category",
+        "published_at"
+    ])
+
+
+@dataclass
 class EntityLinkingConfig:
     """Configuration for entity linking module."""
     # SPARQL endpoints
@@ -89,6 +114,7 @@ class UserProfileConfig:
 class AIRMConfig:
     """Main configuration for the AI Recommendation Module."""
     embedding: EmbeddingConfig = field(default_factory=EmbeddingConfig)
+    vector_store: VectorStoreConfig = field(default_factory=VectorStoreConfig)
     entity_linking: EntityLinkingConfig = field(default_factory=EntityLinkingConfig)
     recommender: RecommenderConfig = field(default_factory=RecommenderConfig)
     user_profile: UserProfileConfig = field(default_factory=UserProfileConfig)
@@ -106,6 +132,7 @@ class AIRMConfig:
         self.data_path.mkdir(parents=True, exist_ok=True)
         self.models_path.mkdir(parents=True, exist_ok=True)
         self.embedding.cache_path.mkdir(parents=True, exist_ok=True)
+        self.vector_store.persist_path.mkdir(parents=True, exist_ok=True)
         self.user_profile.profiles_path.mkdir(parents=True, exist_ok=True)
 
 
