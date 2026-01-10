@@ -132,7 +132,7 @@ services:
       dockerfile: docker/Dockerfile.embedder
     container_name: krss-embedder
     volumes:
-      - ./data:/data:rw
+      - ./data:/app/data:rw
       - ./source:/app/source:ro
       - ./models:/app/models:rw
     environment:
@@ -140,7 +140,7 @@ services:
       - TRANSFORMERS_CACHE=/data/models/transformers
       - HF_HOME=/data/models/huggingface
     working_dir: /app
-    command: ["python", "-m", "source.AI_RM.embed_pipeline", "--input", "/data/raw/scraped_videos.json"]
+    command: ["python", "-m", "source.AI_RM.embed_pipeline", "--input", "/app/data/raw/scraped_videos.json"]
     restart: "on-failure"
 
   pipeline:
